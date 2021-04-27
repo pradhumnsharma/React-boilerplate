@@ -13,7 +13,17 @@ module.exports = {
         filename: 'bundle.js'
     },
     module: {
-        rules: [{
+        rules: [
+            {
+                // for any file with a suffix of js or jsx
+                test: /\.jsx?$/,
+                enforce: 'pre',
+                // ignore transpiling JavaScript from node_modules as it should be that state
+                exclude: /node_modules|build/,
+                // use the babel-loader for transpiling JavaScript to a suitable format
+                loader: 'eslint-loader',
+            },
+            {
             // for any file with a suffix of js or jsx
             test: /\.jsx?$/,
             // ignore transpiling JavaScript from node_modules as it should be that state
