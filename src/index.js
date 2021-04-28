@@ -1,8 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import './styles/index.scss';
 
-const App = () => {
-    return(<h1>Test</h1>)
-}
+const App = () => (
+  <h1 className="main-heading">
+    This is first page
+  </h1>
+);
 
 ReactDOM.render(<App />, document.getElementById('root'));

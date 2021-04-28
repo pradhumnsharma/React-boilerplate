@@ -1,31 +1,101 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const WebpackShellPluginNext = require('webpack-shell-plugin-next');
 
 module.exports = {
-    // the output bundle won't be optimized for production but suitable for development
     mode: 'development',
-    // the app entry point is /src/index.js
     entry: path.resolve(__dirname, 'src', 'index.js'),
     output: {
-        // the output of the webpack build will be in /dist directory
+        clean: true,
         path: path.resolve(__dirname, 'dist'),
-        // the filename of the JS bundle will be bundle.js
-        filename: 'bundle.js'
+        filename: 'application.bundle.[chunkhash].js'
     },
-    module: {
-        rules: [{
-            // for any file with a suffix of js or jsx
-            test: /\.jsx?$/,
-            // ignore transpiling JavaScript from node_modules as it should be that state
-            exclude: /node_modules/,
-            // use the babel-loader for transpiling JavaScript to a suitable format
-            loader: 'babel-loader',
-            options: {
-                // attach the presets to the loader (most projects use .babelrc file instead)
-                presets: ["@babel/preset-env", "@babel/preset-react"]
+    plugins: [
+        new WebpackShellPluginNext({
+            onBuildStart: {
+                scripts: ['echo "===> Starting packing with WEBPACK 5"'],
+                blocking: true,
+                parallel: false
+            },
+            onBuildEnd: {
+                scripts: ['echo "Webpack End"'],
+                blocking: false,
+                parallel: true
             }
-        }]
+        }),
+        new HtmlWebpackPlugin({ title: 'Output Management', template: path.resolve(__dirname, 'public', 'index.html') }),
+        new MiniCssExtractPlugin({
+            filename: 'application.bundle.[chunkhash].css'
+        }),
+    ],
+    module: {
+        rules: [
+            {
+                test: /\.jsx?$/,
+                enforce: 'pre',
+                exclude: /node_modules|build/,
+                loader: 'eslint-loader',
+            },
+            {
+                test: /\.(css|scss)$/,
+                include: [path.resolve(__dirname, 'src/styles')],
+                use: [
+                    {
+                        loader: 'style-loader',
+                    },
+                    {
+                        loader: MiniCssExtractPlugin.loader,
+                        options: {
+                            esModule: false,
+                        },
+                    },
+                    {
+                        loader: 'css-loader',
+                        options: {
+                            sourceMap: true,
+                            modules: {
+                                auto: true,
+                            },
+                        },
+                    },
+                    {
+                        loader: 'sass-loader',
+                        options: {
+                            sourceMap: true,
+                        },
+                    },
+                ],
+            },
+            {
+                test: /\.jsx?$/,
+                exclude: /node_modules/,
+                loader: 'babel-loader',
+                options: {
+                    presets: ["@babel/preset-env", "@babel/preset-react"]
+                }
+            },
+            {
+                test: /\.svg$/,
+                include: [path.resolve(__dirname, 'src/assets/images')],
+                use: ['@svgr/webpack'],
+              },
+            {
+                test: /\.(png|jpe?g|gif|webm|mp4)$/,
+                loader: "file-loader",
+                options: {
+                    context: "src/assets/images",
+                    name: "[path][name].[ext]",
+                    outputPath: "img"
+                }
+            },
+            {
+                test: /\.(woff|woff2|ttf)$/,
+                include: [path.resolve(__dirname, 'src/assets/fonts')],
+                use: {
+                    loader: 'url-loader',
+                },
+            },
+        ]
     },
-    // add a custom index.html as the template
-    plugins: [new HtmlWebpackPlugin({ template: path.resolve(__dirname, 'public', 'index.html') })]
 };
